@@ -1,0 +1,165 @@
+// PropertyDoc data model
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum PropertyStatus {
+  TRACKING
+  UNDER_REVIEW
+  OFFER_MADE
+  RESERVED
+  PASSED
+}
+
+enum DocumentType {
+  BROCHURE
+  SPA
+  PAYMENT_PLAN
+  MARKET_REPORT
+  OTHER
+}
+
+enum ChatThreadType {
+  GENERAL
+  FINANCIAL
+  LEGAL
+  LOCATION
+}
+
+enum ChatRole {
+  USER
+  ASSISTANT
+}
+
+enum AuditSeverity {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum AuditStatus {
+  FLAGGED
+  ACKNOWLEDGED
+  NEGOTIATING
+  RESOLVED
+}
+
+model Property {
+  id              String   @id @default(cuid())
+  name            String
+  developer       String
+  area            String
+  emirate         String   @default("Dubai")
+  status          PropertyStatus @default(TRACKING)
+  coverImage      String?
+  bedrooms        String?
+  sizeSqft        Float?
+  handoverQuarter String?
+
+  // financials — all AED unless noted
+  listPrice           Float
+  pricePerSqft         Float?
+  downPaymentPct       Float?
+  serviceChargePerSqft Float?
+  expectedRentAnnual   Float?
+  dldFeePct            Float   @default(4)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  documents     Document[]
+  chatThreads   ChatThread[]
+  auditFindings AuditFinding[]
+
+  @@map("properties")
+}
+
+model Document {
+  id         String       @id @default(cuid())
+  propertyId String
+  property   Property     @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  type       DocumentType
+  title      String
+  fileUrl    String
+  pageCount  Int          @default(1)
+  uploadedAt DateTime     @default(now())
+
+  citations     Citation[]
+  auditFindings AuditFinding[]
+
+  @@map("documents")
+}
+
+model ChatThread {
+  id         String         @id @default(cuid())
+  propertyId String
+  property   Property       @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  type       ChatThreadType
+
+  messages ChatMessage[]
+
+  @@unique([propertyId, type])
+  @@map("chat_threads")
+}
+
+model ChatMessage {
+  id        String     @id @default(cuid())
+  threadId  String
+  thread    ChatThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  role      ChatRole
+  content   String
+  createdAt DateTime   @default(now())
+
+  citations Citation[]
+
+  @@map("chat_messages")
+}
+
+model Citation {
+  id         String       @id @default(cuid())
+  messageId  String
+  message    ChatMessage  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  documentId String
+  document   Document     @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  page       Int
+  snippet    String
+
+  @@map("citations")
+}
+
+model ExtractionField {
+  id         String   @id @default(cuid())
+  propertyId String
+  key        String
+  label      String
+  value      String
+  confidence Float    @default(1)
+  page       Int?
+
+  @@map("extraction_fields")
+}
+
+model AuditFinding {
+  id           String        @id @default(cuid())
+  propertyId   String
+  property     Property      @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  documentId   String
+  document     Document      @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  clauseRef    String
+  title        String
+  quote        String
+  page         Int
+  severity     AuditSeverity
+  status       AuditStatus   @default(FLAGGED)
+  explanation  String
+  recommendation String
+
+  @@map("audit_findings")
+}
