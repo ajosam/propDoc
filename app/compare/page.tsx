@@ -2,6 +2,8 @@ import { prisma } from "@/lib/prisma";
 import { computeYield } from "@/lib/finance";
 import { CompareView, type CompareData } from "@/components/compare/compare-view";
 
+export const dynamic = "force-dynamic";
+
 export default async function ComparePage() {
   const properties = await prisma.property.findMany({ orderBy: { createdAt: "asc" } });
 

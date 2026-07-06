@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { PropertyGrid } from "@/components/library/property-grid";
 import type { PropertyCardData } from "@/components/library/property-card";
 
+export const dynamic = "force-dynamic";
+
 export default async function LibraryPage() {
   const properties = await prisma.property.findMany({ orderBy: { createdAt: "asc" } });
 
