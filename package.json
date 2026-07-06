@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "postinstall": "node scripts/copy-pdf-worker.mjs",
+    "postinstall": "prisma generate && node scripts/copy-pdf-worker.mjs",
     "fixtures:pdfs": "tsx scripts/generate-pdfs.ts",
     "fixtures:test-pdf": "tsx scripts/generate-test-pdf.ts",
     "db:seed": "tsx prisma/seed.ts",
