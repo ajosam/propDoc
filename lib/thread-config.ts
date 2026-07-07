@@ -1,4 +1,4 @@
-import { ChatThreadType } from "@/lib/generated/prisma/client";
+import type { ChatThreadType } from "@/lib/types";
 import { Scale, LandPlot, MessageSquare, Wallet } from "lucide-react";
 
 export const THREAD_ORDER: ChatThreadType[] = ["GENERAL", "FINANCIAL", "LEGAL", "LOCATION"];

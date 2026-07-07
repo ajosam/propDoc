@@ -10,28 +10,11 @@ import { gradientFor } from "@/lib/gradient";
 import { STATUS_CONFIG } from "@/lib/thread-config";
 import { useCompareStore } from "@/lib/store/compare-store";
 import { PropertyPicker } from "@/components/compare/property-picker";
+import { useVisibleProperties } from "@/lib/use-visible-properties";
+import { computeYield } from "@/lib/finance";
+import type { Property } from "@/lib/types";
 
-export type CompareData = {
-  id: string;
-  name: string;
-  developer: string;
-  area: string;
-  status: string;
-  bedrooms: string | null;
-  sizeSqft: number | null;
-  handoverQuarter: string | null;
-  listPrice: number;
-  pricePerSqft: number | null;
-  serviceChargePerSqft: number | null;
-  expectedRentAnnual: number | null;
-  dldFeePct: number;
-  grossRentAnnual: number;
-  serviceChargeAnnual: number;
-  netRentAnnual: number;
-  grossYieldPct: number;
-  netYieldPct: number;
-  allInPrice: number;
-};
+export type CompareData = Property & ReturnType<typeof computeYield>;
 
 type Row = {
   label: string;
@@ -56,7 +39,9 @@ const ROWS: Row[] = [
   { label: "Handover", render: (d) => d.handoverQuarter ?? "TBA" },
 ];
 
-export function CompareView({ properties }: { properties: CompareData[] }) {
+export function CompareView({ properties: staticProperties }: { properties: Property[] }) {
+  const visible = useVisibleProperties(staticProperties);
+  const properties: CompareData[] = visible.map((p) => ({ ...p, ...computeYield(p) }));
   const selectedIds = useCompareStore((s) => s.selectedIds);
   const selected = properties.filter((p) => selectedIds.includes(p.id));
   const maxYield = Math.max(1, ...selected.map((s) => s.netYieldPct));

@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Building2, MapPin, BedDouble, Ruler, TrendingUp, Check, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,27 +9,15 @@ import { gradientFor } from "@/lib/gradient";
 import { STATUS_CONFIG } from "@/lib/thread-config";
 import { useCompareStore } from "@/lib/store/compare-store";
 import { DeletePropertyDialog } from "@/components/library/delete-property-dialog";
+import { computeYield } from "@/lib/finance";
+import type { Property } from "@/lib/types";
 
-export type PropertyCardData = {
-  id: string;
-  name: string;
-  developer: string;
-  area: string;
-  status: string;
-  bedrooms: string | null;
-  sizeSqft: number | null;
-  handoverQuarter: string | null;
-  listPrice: number;
-  pricePerSqft: number | null;
-  netYieldPct: number;
-};
-
-export function PropertyCard({ property }: { property: PropertyCardData }) {
-  const router = useRouter();
+export function PropertyCard({ property }: { property: Property }) {
   const selectedIds = useCompareStore((s) => s.selectedIds);
   const toggle = useCompareStore((s) => s.toggle);
   const selected = selectedIds.includes(property.id);
   const status = STATUS_CONFIG[property.status] ?? STATUS_CONFIG.TRACKING;
+  const { netYieldPct } = computeYield(property);
 
   return (
     <Card className="group flex flex-col overflow-hidden transition-shadow hover:shadow-md">
@@ -73,7 +60,7 @@ export function PropertyCard({ property }: { property: PropertyCardData }) {
           <div className="text-right">
             <p className="flex items-center justify-end gap-1 text-sm font-semibold text-emerald-600">
               <TrendingUp className="size-3.5" />
-              {formatPct(property.netYieldPct)}
+              {formatPct(netYieldPct)}
             </p>
             <p className="text-[11px] text-slate-400">net yield</p>
           </div>
@@ -100,7 +87,6 @@ export function PropertyCard({ property }: { property: PropertyCardData }) {
             propertyName={property.name}
             onDeleted={() => {
               if (selected) toggle(property.id);
-              router.refresh();
             }}
             trigger={
               <button

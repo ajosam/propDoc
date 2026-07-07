@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { THREAD_ORDER, THREAD_CONFIG } from "@/lib/thread-config";
 import { generateMockReply, MOCK_THINKING_DELAY_MS, type CitationPoolEntry } from "@/lib/mock-chat";
 import { ChatMessageView, type ChatMessageData } from "@/components/workspace/chat-message";
-import type { ChatThreadType } from "@/lib/generated/prisma/client";
+import type { ChatThreadType } from "@/lib/types";
 
 export type ThreadInitial = {
   type: ChatThreadType;

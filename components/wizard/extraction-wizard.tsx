@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Check, Loader2, UploadCloud, FileText, ArrowRight, ArrowLeft, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { WIZARD_TEMPLATES, type WizardTemplate } from "@/lib/wizard-templates";
-import { createPropertyFromWizard, type WizardPropertyInput } from "@/app/add/actions";
+import { buildPropertyFromWizard, type WizardPropertyInput } from "@/lib/build-property-from-wizard";
+import { useLibraryStore } from "@/lib/store/library-store";
 
 const EXTRACTION_STEPS = [
   "Uploading document",
@@ -33,8 +35,10 @@ export function ExtractionWizard() {
   const [completedSteps, setCompletedSteps] = useState(0);
   const [template, setTemplate] = useState<WizardTemplate | null>(null);
   const [form, setForm] = useState<WizardPropertyInput | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [isSaving, setIsSaving] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
+  const addProperty = useLibraryStore((s) => s.addProperty);
 
   function runExtraction(displayName: string, chosen: WizardTemplate) {
     setFileName(displayName);
@@ -81,9 +85,10 @@ export function ExtractionWizard() {
 
   function handleSave() {
     if (!form) return;
-    startTransition(() => {
-      createPropertyFromWizard(form);
-    });
+    setIsSaving(true);
+    const property = buildPropertyFromWizard(form);
+    addProperty(property);
+    router.push(`/property/${property.id}`);
   }
 
   return (
@@ -238,8 +243,8 @@ export function ExtractionWizard() {
             <Button variant="ghost" onClick={() => setStep("upload")} className="gap-1.5">
               <ArrowLeft className="size-4" /> Start over
             </Button>
-            <Button variant="primary" onClick={handleSave} disabled={isPending} className="gap-1.5">
-              {isPending ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
+            <Button variant="primary" onClick={handleSave} disabled={isSaving} className="gap-1.5">
+              {isSaving ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
               Confirm & save to library
             </Button>
           </div>

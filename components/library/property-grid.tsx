@@ -5,12 +5,15 @@ import { useRouter } from "next/navigation";
 import { Search, Scale3D, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { PropertyCard, type PropertyCardData } from "@/components/library/property-card";
+import { PropertyCard } from "@/components/library/property-card";
 import { useCompareStore } from "@/lib/store/compare-store";
+import { useVisibleProperties } from "@/lib/use-visible-properties";
+import type { Property } from "@/lib/types";
 
-export function PropertyGrid({ properties }: { properties: PropertyCardData[] }) {
+export function PropertyGrid({ properties: staticProperties }: { properties: Property[] }) {
   const [query, setQuery] = useState("");
   const router = useRouter();
+  const properties = useVisibleProperties(staticProperties);
   const selectedIds = useCompareStore((s) => s.selectedIds);
   const clear = useCompareStore((s) => s.clear);
 
@@ -27,6 +30,9 @@ export function PropertyGrid({ properties }: { properties: PropertyCardData[] })
 
   return (
     <div className="flex flex-1 flex-col">
+      <p className="mb-3 text-sm text-slate-500">
+        {properties.length} propert{properties.length === 1 ? "y" : "ies"} tracked
+      </p>
       <div className="relative max-w-sm">
         <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
         <Input

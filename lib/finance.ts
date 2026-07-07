@@ -1,4 +1,4 @@
-import type { Property } from "@/lib/generated/prisma/client";
+import type { Property } from "@/lib/types";
 
 export type YieldBreakdown = {
   grossRentAnnual: number;

@@ -13,7 +13,7 @@ import { ChatPanel, type ThreadInitial } from "@/components/workspace/chat-panel
 import { AuditList, type AuditFindingData } from "@/components/audit/audit-list";
 import { DeletePropertyDialog } from "@/components/library/delete-property-dialog";
 import type { CitationPoolEntry } from "@/lib/mock-chat";
-import type { DocumentType } from "@/lib/generated/prisma/client";
+import type { DocumentType } from "@/lib/types";
 
 export type WorkspaceDocument = {
   id: string;

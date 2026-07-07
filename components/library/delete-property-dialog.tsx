@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { Loader2, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { deleteProperty } from "@/app/library/actions";
+import { useLibraryStore } from "@/lib/store/library-store";
 
 export function DeletePropertyDialog({
   propertyId,
@@ -18,14 +18,12 @@ export function DeletePropertyDialog({
   trigger: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
-  const [isPending, startTransition] = useTransition();
+  const removeProperty = useLibraryStore((s) => s.removeProperty);
 
   function handleConfirm() {
-    startTransition(async () => {
-      await deleteProperty(propertyId);
-      setOpen(false);
-      onDeleted();
-    });
+    removeProperty(propertyId);
+    setOpen(false);
+    onDeleted();
   }
 
   return (
@@ -35,15 +33,15 @@ export function DeletePropertyDialog({
         <DialogHeader>
           <DialogTitle>Remove {propertyName} from library?</DialogTitle>
           <DialogDescription>
-            This deletes the property along with its documents, chat history, and audit findings. This can&apos;t be undone.
+            This removes the property from your library. This can&apos;t be undone.
           </DialogDescription>
         </DialogHeader>
         <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={() => setOpen(false)} disabled={isPending}>
+          <Button variant="outline" onClick={() => setOpen(false)}>
             Cancel
           </Button>
-          <Button variant="destructive" onClick={handleConfirm} disabled={isPending} className="gap-1.5">
-            {isPending ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
+          <Button variant="destructive" onClick={handleConfirm} className="gap-1.5">
+            <Trash2 className="size-4" />
             Remove
           </Button>
         </div>

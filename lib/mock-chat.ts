@@ -1,4 +1,4 @@
-import type { ChatThreadType, DocumentType } from "@/lib/generated/prisma/client";
+import type { ChatThreadType, DocumentType } from "@/lib/types";
 
 export type CitationPoolEntry = {
   documentId: string;

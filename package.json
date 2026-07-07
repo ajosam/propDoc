@@ -7,15 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "postinstall": "prisma generate && node scripts/copy-pdf-worker.mjs",
-    "fixtures:pdfs": "tsx scripts/generate-pdfs.ts",
+    "postinstall": "node scripts/copy-pdf-worker.mjs",
     "fixtures:test-pdf": "tsx scripts/generate-test-pdf.ts",
-    "db:seed": "tsx prisma/seed.ts",
-    "db:reset": "npm run fixtures:pdfs && prisma migrate reset --force --skip-generate && npm run db:seed"
+    "data:build": "tsx scripts/build-static-data.ts"
   },
   "dependencies": {
-    "@prisma/adapter-better-sqlite3": "^7.8.0",
-    "@prisma/client": "^7.8.0",
     "@radix-ui/react-checkbox": "^1.3.6",
     "@radix-ui/react-dialog": "^1.1.18",
     "@radix-ui/react-label": "^2.1.11",
@@ -28,7 +24,6 @@
     "lucide-react": "^1.23.0",
     "next": "16.2.10",
     "pdf-lib": "^1.17.1",
-    "prisma": "^7.8.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-pdf": "^10.4.1",
