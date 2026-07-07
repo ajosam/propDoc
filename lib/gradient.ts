@@ -7,7 +7,7 @@ const GRADIENTS = [
 ];
 
 export function gradientFor(id: string) {
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) % 997;
-  return GRADIENTS[hash % GRADIENTS.length];
+  let hash = 5381;
+  for (let i = 0; i < id.length; i++) hash = (hash * 33) ^ id.charCodeAt(i);
+  return GRADIENTS[Math.abs(hash) % GRADIENTS.length];
 }

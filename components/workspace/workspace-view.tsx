@@ -2,18 +2,27 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, MessagesSquare, FileSearch, Trash2 } from "lucide-react";
+import { ArrowLeft, MessagesSquare, FileSearch, Trash2, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { cn, formatAED, formatPct } from "@/lib/utils";
 import { STATUS_CONFIG, DOC_TYPE_LABEL } from "@/lib/thread-config";
-import { PdfViewer } from "@/components/workspace/pdf-viewer";
 import { ChatPanel, type ThreadInitial } from "@/components/workspace/chat-panel";
 import { AuditList, type AuditFindingData } from "@/components/audit/audit-list";
 import { DeletePropertyDialog } from "@/components/library/delete-property-dialog";
 import type { CitationPoolEntry } from "@/lib/mock-chat";
 import type { DocumentType } from "@/lib/types";
+
+const PdfViewer = dynamic(() => import("@/components/workspace/pdf-viewer").then((m) => m.PdfViewer), {
+  ssr: false,
+  loading: () => (
+    <div className="flex flex-1 items-center justify-center text-slate-400">
+      <Loader2 className="size-5 animate-spin" />
+    </div>
+  ),
+});
 
 export type WorkspaceDocument = {
   id: string;
