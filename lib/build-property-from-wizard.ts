@@ -1,6 +1,7 @@
 import { WIZARD_TEMPLATES } from "@/lib/wizard-templates";
 import { WIZARD_TEMPLATE_DOCS } from "@/lib/data/wizard-docs";
-import type { Property, ChatThreadType } from "@/lib/types";
+import { buildWelcomeChatThreads } from "@/lib/build-welcome-threads";
+import type { Property } from "@/lib/types";
 
 export type WizardPropertyInput = {
   templateId: string;
@@ -17,15 +18,6 @@ export type WizardPropertyInput = {
   expectedRentAnnual: number;
   dldFeePct: number;
 };
-
-const WELCOME_MESSAGE: Record<ChatThreadType, string> = {
-  GENERAL: "This thread is ready. Ask me anything about the project, unit, or developer once you've explored the document.",
-  FINANCIAL: "Ask me about the payment plan, service charges, or projected net yield for this unit.",
-  LEGAL: "Ask me about specific SPA clauses once a Sale & Purchase Agreement is uploaded for this property.",
-  LOCATION: "Ask me about the neighbourhood, connectivity, or comparable projects nearby.",
-};
-
-const THREAD_TYPES: ChatThreadType[] = ["GENERAL", "FINANCIAL", "LEGAL", "LOCATION"];
 
 /** Builds a full Property from wizard input, entirely client-side — no server round-trip. */
 export function buildPropertyFromWizard(input: WizardPropertyInput): Property {
@@ -58,17 +50,7 @@ export function buildPropertyFromWizard(input: WizardPropertyInput): Property {
         pageCount: doc.pageCount,
       },
     ],
-    chatThreads: THREAD_TYPES.map((type) => ({
-      type,
-      messages: [
-        {
-          id: `${propertyId}-${type.toLowerCase()}-0`,
-          role: "ASSISTANT",
-          content: WELCOME_MESSAGE[type],
-          citations: [],
-        },
-      ],
-    })),
+    chatThreads: buildWelcomeChatThreads(propertyId),
     auditFindings: [],
     extractionFields: template.extraFields.map((f) => ({
       key: f.label.toLowerCase().replace(/\s+/g, "_"),

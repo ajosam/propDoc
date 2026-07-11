@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LibraryBig, Scale3D, PlusCircle, FileSearch2 } from "lucide-react";
+import { LibraryBig, Scale3D, PlusCircle, FileSearch2, LayoutGrid } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
   { href: "/library", label: "Library", icon: LibraryBig },
+  { href: "/offplan", label: "Off-plan Properties", icon: LayoutGrid },
   { href: "/compare", label: "Compare", icon: Scale3D },
   { href: "/add", label: "Add Property", icon: PlusCircle },
 ];

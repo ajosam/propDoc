@@ -50,12 +50,12 @@ export type ExtractionField = {
   page: number | null;
 };
 
-export type Property = {
+/** The flat, listing-level fields shared by both a tracked Property and a catalog row. */
+export type PropertyListingFields = {
   id: string;
   name: string;
   developer: string;
   area: string;
-  status: PropertyStatus;
   bedrooms: string | null;
   sizeSqft: number | null;
   handoverQuarter: string | null;
@@ -65,8 +65,15 @@ export type Property = {
   serviceChargePerSqft: number | null;
   expectedRentAnnual: number | null;
   dldFeePct: number;
+};
+
+export type Property = PropertyListingFields & {
+  status: PropertyStatus;
   documents: Document[];
   chatThreads: ChatThread[];
   auditFindings: AuditFinding[];
   extractionFields: ExtractionField[];
 };
+
+/** A row from the off-plan catalog (e.g. imported from an Excel sheet) — not yet in the user's library. */
+export type CatalogListing = PropertyListingFields;

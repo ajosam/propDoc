@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, MessagesSquare, FileSearch, Trash2, Loader2 } from "lucide-react";
+import { ArrowLeft, MessagesSquare, FileSearch, Trash2, Loader2, UploadCloud } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { cn, formatAED, formatPct } from "@/lib/utils";
@@ -123,13 +123,19 @@ export function WorkspaceView({
               ))}
             </div>
           )}
-          {activeDoc && (
+          {activeDoc ? (
             <PdfViewer
               key={activeDoc.id}
               fileUrl={activeDoc.fileUrl}
               page={pageByDoc[activeDoc.id] ?? 1}
               onPageChange={(page) => setPageByDoc((prev) => ({ ...prev, [activeDoc.id]: page }))}
             />
+          ) : (
+            <div className="flex flex-1 flex-col items-center justify-center gap-2 text-center text-slate-400">
+              <UploadCloud className="size-8" />
+              <p className="text-sm font-medium text-slate-500">No documents yet</p>
+              <p className="max-w-xs text-xs">Upload a brochure, SPA, or payment plan through the onboarding wizard to start building this property&apos;s workspace.</p>
+            </div>
           )}
         </div>
 
