@@ -1,25 +1,12 @@
 import { WIZARD_TEMPLATES } from "@/lib/wizard-templates";
 import { WIZARD_TEMPLATE_DOCS } from "@/lib/data/wizard-docs";
 import { buildWelcomeChatThreads } from "@/lib/build-welcome-threads";
+import type { PropertyFormFields } from "@/lib/build-property-from-extraction";
 import type { Property } from "@/lib/types";
 
-export type WizardPropertyInput = {
-  templateId: string;
-  name: string;
-  developer: string;
-  area: string;
-  bedrooms: string;
-  sizeSqft: number;
-  handoverQuarter: string;
-  listPrice: number;
-  pricePerSqft: number;
-  downPaymentPct: number;
-  serviceChargePerSqft: number;
-  expectedRentAnnual: number;
-  dldFeePct: number;
-};
+export type WizardPropertyInput = PropertyFormFields & { templateId: string };
 
-/** Builds a full Property from wizard input, entirely client-side — no server round-trip. */
+/** Builds a full Property from a chosen sample template, entirely client-side — no server round-trip. */
 export function buildPropertyFromWizard(input: WizardPropertyInput): Property {
   const template = WIZARD_TEMPLATES.find((t) => t.id === input.templateId) ?? WIZARD_TEMPLATES[0];
   const doc = WIZARD_TEMPLATE_DOCS[template.id];

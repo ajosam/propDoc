@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Loader2, UploadCloud, FileText, ArrowRight, ArrowLeft, Sparkles } from "lucide-react";
+import { Check, Loader2, UploadCloud, FileText, ArrowRight, ArrowLeft, Sparkles, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,8 +10,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { WIZARD_TEMPLATES, type WizardTemplate } from "@/lib/wizard-templates";
-import { buildPropertyFromWizard, type WizardPropertyInput } from "@/lib/build-property-from-wizard";
+import { buildPropertyFromWizard } from "@/lib/build-property-from-wizard";
+import { buildPropertyFromExtraction, type PropertyFormFields } from "@/lib/build-property-from-extraction";
 import { useLibraryStore } from "@/lib/store/library-store";
+import { extractPropertyAction } from "@/app/add/actions";
+import type { DocumentType } from "@/lib/types";
 
 const EXTRACTION_STEPS = [
   "Uploading document",
@@ -23,6 +26,12 @@ const EXTRACTION_STEPS = [
 
 type Step = "upload" | "extracting" | "review";
 
+type ExtraField = { label: string; value: string; confidence: number };
+
+type Source =
+  | { kind: "sample"; template: WizardTemplate }
+  | { kind: "upload"; fileUrl: string; fileName: string; docType: DocumentType; extraFields: ExtraField[] };
+
 function confidenceColor(confidence: number) {
   if (confidence >= 0.85) return "emerald" as const;
   if (confidence >= 0.7) return "amber" as const;
@@ -33,16 +42,17 @@ export function ExtractionWizard() {
   const [step, setStep] = useState<Step>("upload");
   const [fileName, setFileName] = useState<string | null>(null);
   const [completedSteps, setCompletedSteps] = useState(0);
-  const [template, setTemplate] = useState<WizardTemplate | null>(null);
-  const [form, setForm] = useState<WizardPropertyInput | null>(null);
+  const [source, setSource] = useState<Source | null>(null);
+  const [form, setForm] = useState<PropertyFormFields | null>(null);
+  const [extractionError, setExtractionError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const addProperty = useLibraryStore((s) => s.addProperty);
 
-  function runExtraction(displayName: string, chosen: WizardTemplate) {
-    setFileName(displayName);
-    setTemplate(chosen);
+  function runSampleExtraction(sample: WizardTemplate) {
+    setFileName(sample.documentName);
+    setExtractionError(null);
     setStep("extracting");
     setCompletedSteps(0);
 
@@ -51,7 +61,8 @@ export function ExtractionWizard() {
         setCompletedSteps(i + 1);
         if (i === EXTRACTION_STEPS.length - 1) {
           setTimeout(() => {
-            setForm({ templateId: chosen.id, ...chosen.property });
+            setForm(sample.property);
+            setSource({ kind: "sample", template: sample });
             setStep("review");
           }, 400);
         }
@@ -59,37 +70,85 @@ export function ExtractionWizard() {
     });
   }
 
-  function beginExtraction(file: File) {
-    const chosen = WIZARD_TEMPLATES[Math.abs(file.name.length + file.size) % WIZARD_TEMPLATES.length];
-    runExtraction(file.name, chosen);
+  async function runUploadExtraction(file: File) {
+    setFileName(file.name);
+    setExtractionError(null);
+    setStep("extracting");
+    setCompletedSteps(0);
+
+    const totalSteps = EXTRACTION_STEPS.length;
+    let cancelled = false;
+
+    const tickAnimation = (async () => {
+      for (let i = 0; i < totalSteps - 1; i++) {
+        await new Promise((resolve) => setTimeout(resolve, 550));
+        if (!cancelled) setCompletedSteps(i + 1);
+      }
+    })();
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const [result] = await Promise.all([extractPropertyAction(formData), tickAnimation]);
+      setCompletedSteps(totalSteps);
+
+      const fileUrl = URL.createObjectURL(file);
+      setForm({
+        name: result.name,
+        developer: result.developer,
+        area: result.area,
+        bedrooms: result.bedrooms,
+        sizeSqft: result.sizeSqft,
+        handoverQuarter: result.handoverQuarter,
+        listPrice: result.listPrice,
+        pricePerSqft: result.pricePerSqft,
+        downPaymentPct: result.downPaymentPct,
+        serviceChargePerSqft: result.serviceChargePerSqft,
+        expectedRentAnnual: result.expectedRentAnnual,
+        dldFeePct: result.dldFeePct,
+      });
+      setSource({ kind: "upload", fileUrl, fileName: file.name, docType: result.docType, extraFields: result.extraFields });
+      setTimeout(() => setStep("review"), 350);
+    } catch (err) {
+      cancelled = true;
+      setExtractionError(err instanceof Error ? err.message : "Extraction failed.");
+      setStep("upload");
+    }
   }
 
   function handleFileInput(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (file) beginExtraction(file);
+    if (file) runUploadExtraction(file);
   }
 
   function handleDrop(e: React.DragEvent<HTMLDivElement>) {
     e.preventDefault();
     const file = e.dataTransfer.files?.[0];
-    if (file) beginExtraction(file);
+    if (file) runUploadExtraction(file);
   }
 
-  function selectSampleTemplate(sample: WizardTemplate) {
-    runExtraction(sample.documentName, sample);
-  }
-
-  function updateForm<K extends keyof WizardPropertyInput>(key: K, value: WizardPropertyInput[K]) {
+  function updateForm<K extends keyof PropertyFormFields>(key: K, value: PropertyFormFields[K]) {
     setForm((prev) => (prev ? { ...prev, [key]: value } : prev));
   }
 
   function handleSave() {
-    if (!form) return;
+    if (!form || !source) return;
     setIsSaving(true);
-    const property = buildPropertyFromWizard(form);
+    const property =
+      source.kind === "sample"
+        ? buildPropertyFromWizard({ templateId: source.template.id, ...form })
+        : buildPropertyFromExtraction(form, {
+            fileUrl: source.fileUrl,
+            fileName: source.fileName,
+            docType: source.docType,
+            extraFields: source.extraFields,
+          });
     addProperty(property);
     router.push(`/property/${property.id}`);
   }
+
+  const extraFields: ExtraField[] = source?.kind === "sample" ? source.template.extraFields : source?.kind === "upload" ? source.extraFields : [];
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6 px-8 py-10">
@@ -117,9 +176,19 @@ export function ExtractionWizard() {
         <Card>
           <CardHeader>
             <CardTitle>Upload a document</CardTitle>
-            <CardDescription>Brochure, SPA, or payment plan — PropertyDoc will extract the key fields automatically.</CardDescription>
+            <CardDescription>Brochure, SPA, or payment plan — PropertyDoc will extract the key fields automatically using Gemini.</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
+            {extractionError && (
+              <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-800">
+                <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+                <div>
+                  <p className="font-medium">Couldn&apos;t extract this document</p>
+                  <p className="text-xs text-amber-700">{extractionError}</p>
+                </div>
+              </div>
+            )}
+
             <div
               onDragOver={(e) => e.preventDefault()}
               onDrop={handleDrop}
@@ -128,7 +197,7 @@ export function ExtractionWizard() {
             >
               <UploadCloud className="size-8 text-slate-400" />
               <p className="text-sm font-medium text-slate-600">Drag a PDF here, or click to browse</p>
-              <p className="text-xs text-slate-400">PDF up to 25MB</p>
+              <p className="text-xs text-slate-400">PDF up to 15MB</p>
               <input ref={inputRef} type="file" accept="application/pdf" className="hidden" onChange={handleFileInput} />
             </div>
 
@@ -140,7 +209,7 @@ export function ExtractionWizard() {
               {WIZARD_TEMPLATES.map((t) => (
                 <button
                   key={t.id}
-                  onClick={() => selectSampleTemplate(t)}
+                  onClick={() => runSampleExtraction(t)}
                   className="flex items-center gap-3 rounded-lg border border-slate-200 px-3 py-2.5 text-left text-sm hover:bg-slate-50"
                 >
                   <FileText className="size-4 shrink-0 text-slate-400" />
@@ -188,7 +257,7 @@ export function ExtractionWizard() {
         </Card>
       )}
 
-      {step === "review" && form && template && (
+      {step === "review" && form && source && (
         <>
           <Card>
             <CardHeader>
@@ -221,23 +290,25 @@ export function ExtractionWizard() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Additional fields detected</CardTitle>
-              <CardDescription>Shown for reference — not saved as structured data in this demo.</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-2">
-              {template.extraFields.map((f) => (
-                <div key={f.label} className="flex items-center justify-between rounded-lg border border-slate-100 px-3 py-2 text-sm">
-                  <span className="text-slate-500">{f.label}</span>
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-slate-800">{f.value}</span>
-                    <Badge variant={confidenceColor(f.confidence)}>{Math.round(f.confidence * 100)}%</Badge>
+          {extraFields.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Additional fields detected</CardTitle>
+                <CardDescription>Shown for reference — not saved as structured data in this demo.</CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-2">
+                {extraFields.map((f) => (
+                  <div key={f.label} className="flex items-center justify-between rounded-lg border border-slate-100 px-3 py-2 text-sm">
+                    <span className="text-slate-500">{f.label}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-slate-800">{f.value}</span>
+                      <Badge variant={confidenceColor(f.confidence)}>{Math.round(f.confidence * 100)}%</Badge>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
+                ))}
+              </CardContent>
+            </Card>
+          )}
 
           <div className="flex items-center justify-between">
             <Button variant="ghost" onClick={() => setStep("upload")} className="gap-1.5">

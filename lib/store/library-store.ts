@@ -17,7 +17,13 @@ export const useLibraryStore = create<LibraryStore>()(
     (set, get) => ({
       addedProperties: [],
       removedIds: [],
-      addProperty: (property) => set((state) => ({ addedProperties: [...state.addedProperties, property] })),
+      addProperty: (property) =>
+        set((state) => ({
+          addedProperties: state.addedProperties.some((p) => p.id === property.id)
+            ? state.addedProperties.map((p) => (p.id === property.id ? property : p))
+            : [...state.addedProperties, property],
+          removedIds: state.removedIds.filter((id) => id !== property.id),
+        })),
       removeProperty: (id) =>
         set((state) => ({
           addedProperties: state.addedProperties.filter((p) => p.id !== id),
@@ -25,6 +31,19 @@ export const useLibraryStore = create<LibraryStore>()(
         })),
       getAddedProperty: (id) => get().addedProperties.find((p) => p.id === id),
     }),
-    { name: "propertydoc-library" }
+    {
+      name: "propertydoc-library",
+      merge: (persisted, current) => {
+        const merged = { ...current, ...(persisted as Partial<LibraryStore>) };
+        const seen = new Set<string>();
+        merged.addedProperties = merged.addedProperties.filter((p) => {
+          if (seen.has(p.id)) return false;
+          seen.add(p.id);
+          return true;
+        });
+        merged.removedIds = Array.from(new Set(merged.removedIds));
+        return merged;
+      },
+    }
   )
 );
