@@ -77,7 +77,7 @@ export function CompareView({ properties: staticProperties }: { properties: Prop
                 .sort((a, b) => b.netYieldPct - a.netYieldPct)
                 .map((p, i) => (
                   <div key={p.id} className="flex items-center gap-3">
-                    <div className="w-40 shrink-0 truncate text-sm text-slate-700">
+                    <div className="w-20 shrink-0 truncate text-sm text-slate-700 sm:w-40">
                       {i === 0 && <span className="mr-1 text-amber-500">★</span>}
                       {p.name}
                     </div>
@@ -87,7 +87,7 @@ export function CompareView({ properties: staticProperties }: { properties: Prop
                         style={{ width: `${Math.max(4, (p.netYieldPct / maxYield) * 100)}%` }}
                       />
                     </div>
-                    <div className="w-16 shrink-0 text-right text-sm font-semibold text-slate-900">{formatPct(p.netYieldPct)}</div>
+                    <div className="w-14 shrink-0 text-right text-sm font-semibold text-slate-900 sm:w-16">{formatPct(p.netYieldPct)}</div>
                   </div>
                 ))}
             </CardContent>

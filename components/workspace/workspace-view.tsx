@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, MessagesSquare, FileSearch, Trash2, Loader2, UploadCloud } from "lucide-react";
+import { ArrowLeft, MessagesSquare, FileSearch, Trash2, Loader2, UploadCloud, FileText } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { cn, formatAED, formatPct } from "@/lib/utils";
@@ -32,6 +32,8 @@ export type WorkspaceDocument = {
   pageCount: number;
 };
 
+type MobilePane = "document" | "details";
+
 export function WorkspaceView({
   property,
   documents,
@@ -58,6 +60,7 @@ export function WorkspaceView({
     Object.fromEntries(documents.map((d) => [d.id, 1]))
   );
   const [mainTab, setMainTab] = useState<"chat" | "audit">("chat");
+  const [mobilePane, setMobilePane] = useState<MobilePane>("document");
 
   const activeDoc = documents.find((d) => d.id === activeDocId) ?? documents[0];
   const spaDoc = documents.find((d) => d.type === "SPA");
@@ -66,28 +69,29 @@ export function WorkspaceView({
   function jumpTo(documentId: string, page: number) {
     setActiveDocId(documentId);
     setPageByDoc((prev) => ({ ...prev, [documentId]: page }));
+    setMobilePane("document");
     if (spaDoc && documentId === spaDoc.id) setMainTab((t) => t);
   }
 
   return (
     <div className="flex h-full flex-col">
-      <header className="flex items-center justify-between border-b border-slate-200 bg-white px-5 py-3">
-        <div className="flex items-center gap-3">
-          <Link href="/library" className="flex size-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600">
+      <header className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-white px-3 py-2.5 sm:px-5 sm:py-3">
+        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+          <Link href="/library" className="flex size-8 shrink-0 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600">
             <ArrowLeft className="size-4" />
           </Link>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-sm font-semibold text-slate-900">{property.name}</h1>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="truncate text-sm font-semibold text-slate-900">{property.name}</h1>
               <Badge variant={status.variant}>{status.label}</Badge>
             </div>
-            <p className="text-xs text-slate-500">{property.developer} · {property.area}</p>
+            <p className="truncate text-xs text-slate-500">{property.developer} · {property.area}</p>
           </div>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 sm:gap-4">
           <div className="text-right">
             <p className="text-sm font-semibold text-emerald-600">{formatPct(property.netYieldPct)}</p>
-            <p className="text-[11px] text-slate-400">net yield after service charges</p>
+            <p className="hidden text-[11px] text-slate-400 sm:block">net yield after service charges</p>
           </div>
           <DeletePropertyDialog
             propertyId={property.id}
@@ -96,7 +100,7 @@ export function WorkspaceView({
             trigger={
               <button
                 title="Remove from library"
-                className="flex size-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600"
+                className="flex size-8 shrink-0 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600"
               >
                 <Trash2 className="size-4" />
               </button>
@@ -105,8 +109,36 @@ export function WorkspaceView({
         </div>
       </header>
 
+      <div className="border-b border-slate-200 bg-white p-2 md:hidden">
+        <div className="flex rounded-lg bg-slate-100 p-1">
+          <button
+            onClick={() => setMobilePane("document")}
+            className={cn(
+              "flex flex-1 items-center justify-center gap-1.5 rounded-md py-1.5 text-xs font-medium transition-colors",
+              mobilePane === "document" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"
+            )}
+          >
+            <FileText className="size-3.5" /> Document
+          </button>
+          <button
+            onClick={() => setMobilePane("details")}
+            className={cn(
+              "flex flex-1 items-center justify-center gap-1.5 rounded-md py-1.5 text-xs font-medium transition-colors",
+              mobilePane === "details" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"
+            )}
+          >
+            <MessagesSquare className="size-3.5" /> Chat & Audit
+          </button>
+        </div>
+      </div>
+
       <div className="flex flex-1 overflow-hidden">
-        <div className="flex min-w-0 flex-1 flex-col border-r border-slate-200">
+        <div
+          className={cn(
+            "min-w-0 flex-col border-slate-200 md:flex md:flex-1 md:border-r",
+            mobilePane === "document" ? "flex flex-1" : "hidden"
+          )}
+        >
           {documents.length > 1 && (
             <div className="flex gap-1 overflow-x-auto border-b border-slate-200 bg-white px-3 py-2">
               {documents.map((doc) => (
@@ -131,7 +163,7 @@ export function WorkspaceView({
               onPageChange={(page) => setPageByDoc((prev) => ({ ...prev, [activeDoc.id]: page }))}
             />
           ) : (
-            <div className="flex flex-1 flex-col items-center justify-center gap-2 text-center text-slate-400">
+            <div className="flex flex-1 flex-col items-center justify-center gap-2 px-6 text-center text-slate-400">
               <UploadCloud className="size-8" />
               <p className="text-sm font-medium text-slate-500">No documents yet</p>
               <p className="max-w-xs text-xs">Upload a brochure, SPA, or payment plan through the onboarding wizard to start building this property&apos;s workspace.</p>
@@ -139,7 +171,12 @@ export function WorkspaceView({
           )}
         </div>
 
-        <div className="flex w-[440px] shrink-0 flex-col">
+        <div
+          className={cn(
+            "w-full min-w-0 shrink-0 flex-col md:flex md:w-[440px]",
+            mobilePane === "details" ? "flex flex-1" : "hidden"
+          )}
+        >
           <Tabs value={mainTab} onValueChange={(v) => setMainTab(v as "chat" | "audit")} className="flex h-full flex-col">
             <div className="border-b border-slate-200 px-4 py-2.5">
               <TabsList className="w-full">

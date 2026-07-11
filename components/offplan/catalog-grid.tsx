@@ -126,7 +126,7 @@ export function CatalogGrid({ listings }: { listings: CatalogListing[] }) {
             />
           </div>
 
-          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <FilterField icon={MapPin} label="Location">
               <Select value={filters.area} onValueChange={(v) => updateFilter("area", v)}>
                 <SelectTrigger className="w-full">

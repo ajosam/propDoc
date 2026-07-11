@@ -151,7 +151,7 @@ export function ExtractionWizard() {
   const extraFields: ExtraField[] = source?.kind === "sample" ? source.template.extraFields : source?.kind === "upload" ? source.extraFields : [];
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-6 px-8 py-10">
+    <div className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-6 sm:px-8 sm:py-10">
       <div className="flex items-center gap-2">
         {(["upload", "extracting", "review"] as Step[]).map((s, i) => (
           <div key={s} className="flex items-center gap-2">
@@ -266,7 +266,7 @@ export function ExtractionWizard() {
               </CardTitle>
               <CardDescription>Edit anything that looks off before saving to your library.</CardDescription>
             </CardHeader>
-            <CardContent className="grid grid-cols-2 gap-4">
+            <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Field label="Project name" value={form.name} onChange={(v) => updateForm("name", v)} span2 />
               <Field label="Developer" value={form.developer} onChange={(v) => updateForm("developer", v)} />
               <Field label="Area" value={form.area} onChange={(v) => updateForm("area", v)} />
@@ -280,7 +280,7 @@ export function ExtractionWizard() {
             <CardHeader>
               <CardTitle>Financials</CardTitle>
             </CardHeader>
-            <CardContent className="grid grid-cols-2 gap-4">
+            <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Field label="List price (AED)" type="number" value={String(form.listPrice)} onChange={(v) => updateForm("listPrice", Number(v))} />
               <Field label="Price / sqft (AED)" type="number" value={String(form.pricePerSqft)} onChange={(v) => updateForm("pricePerSqft", Number(v))} />
               <Field label="Down payment (%)" type="number" value={String(form.downPaymentPct)} onChange={(v) => updateForm("downPaymentPct", Number(v))} />
