@@ -176,7 +176,7 @@ export function ExtractionWizard() {
         <Card>
           <CardHeader>
             <CardTitle>Upload a document</CardTitle>
-            <CardDescription>Brochure, SPA, or payment plan — PropertyDoc will extract the key fields automatically using Gemini.</CardDescription>
+            <CardDescription>Brochure, SPA, or payment plan — PropertyDoc will extract the key fields automatically.</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             {extractionError && (
